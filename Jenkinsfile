@@ -13,5 +13,16 @@ pipeline {
                 }
             }
         }
+        stage('Test Docker Image') {
+            steps {
+                script {
+                    sh 'docker run -d --name flask-test -p 5000:5000 simple-flask-app'
+                    sh 'sleep 5'
+                    sh 'curl -f http://localhost:5000'
+                    sh 'docker stop flask-test'
+                    sh 'docker rm flask-test'
+                }
+            }
+        }
     }
 }
