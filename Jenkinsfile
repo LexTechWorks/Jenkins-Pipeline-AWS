@@ -54,12 +54,13 @@ pipeline {
                         def taskdef_file = 'taskdef.json'
                         // Replace image in taskdef.json
                         sh "sed -i 's|REPLACE_IMAGE|${image}|g' ${taskdef_file}"
-                        // Register new task definition
-                        sh "aws ecs register-task-definition --cli-input-json file://${taskdef_file} --region ${region} > reg_out.json"
-                        // Extract new task definition ARN
-                        sh "set TASK_DEF_ARN=$(jq -r .taskDefinition.taskDefinitionArn reg_out.json)"
+                        // Register new task definition and capture the output
+                        def taskDefArn = sh(
+                            script: "aws ecs register-task-definition --cli-input-json file://${taskdef_file} --region ${region} | jq -r .taskDefinition.taskDefinitionArn",
+                            returnStdout: true
+                        ).trim()
                         // Update ECS service to use new task definition
-                        sh "aws ecs update-service --cluster ${cluster} --service ${service} --task-definition $TASK_DEF_ARN --region ${region}"
+                        sh "aws ecs update-service --cluster ${cluster} --service ${service} --task-definition ${taskDefArn} --region ${region}"
                     }
                 }
             }
