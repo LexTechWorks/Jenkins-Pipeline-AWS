@@ -40,7 +40,6 @@ pipeline {
                 }
             }
         }
-        }
         stage('Deploy to Fargate') {
             steps {
                 withCredentials([
