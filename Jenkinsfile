@@ -40,22 +40,26 @@ pipeline {
                 }
             }
         }
+        }
         stage('Deploy to Fargate') {
             steps {
                 withCredentials([
                     [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access-key']
-                ]) {    
+                ]) {
                     script {
+                        def region = 'us-east-1'
+                        def image = '833371734412.dkr.ecr.us-east-1.amazonaws.com/simple-flask-app:latest'
                         def cluster = 'lesley-simple-flask-app'
                         def service = 'lesley-simple-flask-app-task-service-wmm0jno5'
-                        def repo = '833371734412.dkr.ecr.us-east-1.amazonaws.com/simple-flask-app'
-                        def image = "${repo}:latest"
-                        def region = 'us-east-1'
-                        sh """
-                            aws ecs update-service --cluster ${cluster} --service ${service} \
-                            --force-new-deployment --region ${region} \
-                            --image ${image}
-                        """
+                        def taskdef_file = 'taskdef.json'
+                        // Replace image in taskdef.json
+                        sh "sed -i 's|REPLACE_IMAGE|${image}|g' ${taskdef_file}"
+                        // Register new task definition
+                        sh "aws ecs register-task-definition --cli-input-json file://${taskdef_file} --region ${region} > reg_out.json"
+                        // Extract new task definition ARN
+                        sh "set TASK_DEF_ARN=$(jq -r .taskDefinition.taskDefinitionArn reg_out.json)"
+                        // Update ECS service to use new task definition
+                        sh "aws ecs update-service --cluster ${cluster} --service ${service} --task-definition $TASK_DEF_ARN --region ${region}"
                     }
                 }
             }

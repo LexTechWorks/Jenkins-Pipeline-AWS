@@ -1,0 +1,20 @@
+{
+  "family": "lesley-simple-flask-app-task-def",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "simple-flask-app",
+      "image": "REPLACE_IMAGE",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512"
+}
