@@ -40,5 +40,25 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to Fargate') {
+            steps {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access-key']
+                ]) {    
+                    script {
+                        def cluster = 'lesley-simple-flask-app'
+                        def service = 'lesley-simple-flask-app-task-service-wmm0jno5'
+                        def repo = '833371734412.dkr.ecr.us-east-1.amazonaws.com/simple-flask-app'
+                        def image = "${repo}:latest"
+                        def region = 'us-east-1'
+                        sh """
+                            aws ecs update-service --cluster ${cluster} --service ${service} \
+                            --force-new-deployment --region ${region} \
+                            --image ${image}
+                        """
+                    }
+                }
+            }
+        }
     }
 }
